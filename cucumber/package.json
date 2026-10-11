@@ -1,0 +1,16 @@
+{
+  "name": "playwrightproject-cucumber",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Same tests as ../tests and ../bdd, run with @cucumber/cucumber + Playwright",
+  "type": "module",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:headed": "HEADED=1 cucumber-js"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^13.3.0",
+    "@playwright/test": "^1.64.0",
+    "dotenv": "^18.0.7"
+  }
+}
