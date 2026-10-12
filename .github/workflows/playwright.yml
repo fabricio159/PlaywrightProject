@@ -5,14 +5,41 @@ on:
   pull_request:
     branches: [ main, master ]
   workflow_dispatch:
+    inputs:
+      base_url:
+        description: 'Base URL to test (blank = repo variable or saucedemo)'
+        required: false
+        type: string
+      browser:
+        description: 'Browser(s) for Playwright + BDD'
+        required: false
+        type: choice
+        default: all
+        options: [all, chromium, firefox, webkit]
+      cucumber_browser:
+        description: 'Browser for Cucumber'
+        required: false
+        type: choice
+        default: chromium
+        options: [chromium, firefox, webkit]
+      sauce_username:
+        description: 'Login username (blank = secret or standard_user)'
+        required: false
+        type: string
+      sauce_password:
+        description: 'Login password (blank = secret or secret_sauce). Visible to anyone who can see the run: use only for test accounts'
+        required: false
+        type: string
 
 # CI has no .env file (it is gitignored), so set the same values here.
-# Override them in GitHub: Settings > Secrets and variables > Actions.
+# Priority: manual-run input > repo variable/secret (Settings > Secrets and variables > Actions) > default.
+# On push/PR runs the inputs are empty, so the later values apply.
 env:
-  BASE_URL: ${{ vars.BASE_URL || 'https://www.saucedemo.com/' }}
-  SAUCE_USERNAME: ${{ secrets.SAUCE_USERNAME || 'standard_user' }}
-  SAUCE_PASSWORD: ${{ secrets.SAUCE_PASSWORD || 'secret_sauce' }}
-  BROWSER: ${{ vars.BROWSER || 'all' }}
+  BASE_URL: ${{ inputs.base_url || vars.BASE_URL || 'https://www.saucedemo.com/' }}
+  SAUCE_USERNAME: ${{ inputs.sauce_username || secrets.SAUCE_USERNAME || 'standard_user' }}
+  # Inputs are not secret: anyone who can see the run can see a typed password
+  SAUCE_PASSWORD: ${{ inputs.sauce_password || secrets.SAUCE_PASSWORD || 'secret_sauce' }}
+  BROWSER: ${{ inputs.browser || vars.BROWSER || 'all' }}
 
 jobs:
   playwright:
@@ -54,7 +81,7 @@ jobs:
         working-directory: cucumber
     env:
       # cucumber runs one browser per run; "all" falls back to chromium
-      BROWSER: ${{ vars.CUCUMBER_BROWSER || 'chromium' }}
+      BROWSER: ${{ inputs.cucumber_browser || vars.CUCUMBER_BROWSER || 'chromium' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
