@@ -1,5 +1,6 @@
 import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
+import { logIn } from '../support/world.js';
 
 Given('I am on the login page', async function () {
   await this.page.goto('/');
@@ -25,9 +26,3 @@ Then('I should see the Products page', async function () {
   await expect(this.page).toHaveURL('/inventory.html');
   await expect(this.page.locator('[data-test="title"]')).toHaveText('Products');
 });
-
-async function logIn(page, username, password) {
-  await page.getByPlaceholder('Username').fill(username);
-  await page.getByPlaceholder('Password').fill(password);
-  await page.getByRole('button', { name: 'Login' }).click();
-}

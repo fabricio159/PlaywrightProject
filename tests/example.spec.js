@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// These tests exercise the login form, so start logged out.
+test.use({ storageState: { cookies: [], origins: [] } });
+
 test('has title', async ({ page }) => {
   await page.goto('/');
 

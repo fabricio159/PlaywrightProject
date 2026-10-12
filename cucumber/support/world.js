@@ -25,9 +25,15 @@ export function browserName() {
   return name;
 }
 
-/** Per-scenario state shared by steps through `this` (context and page are set in hooks.js). */
-class CustomWorld extends World {
-  baseURL = process.env.BASE_URL ?? 'https://playwright.dev';
+export const baseURL = process.env.BASE_URL ?? 'https://playwright.dev';
+
+export async function logIn(page, username, password) {
+  await page.getByPlaceholder('Username').fill(username);
+  await page.getByPlaceholder('Password').fill(password);
+  await page.getByRole('button', { name: 'Login' }).click();
 }
+
+/** Per-scenario state shared by steps through `this` (context and page are set in hooks.js). */
+class CustomWorld extends World {}
 
 setWorldConstructor(CustomWorld);

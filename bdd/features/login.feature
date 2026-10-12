@@ -1,3 +1,4 @@
+@logged-out
 Feature: Login
 
   Scenario: Login as standard_user

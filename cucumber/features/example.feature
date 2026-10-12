@@ -1,4 +1,5 @@
 # Port of tests/example.spec.js
+@logged-out
 Feature: Example
 
   Scenario: has title

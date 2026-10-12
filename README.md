@@ -8,7 +8,19 @@ UI tests for [Swag Labs (saucedemo.com)](https://www.saucedemo.com/), written th
 | 2. BDD with playwright-bdd | `bdd/` | `playwright-bdd` + `@playwright/test` |
 | 3. BDD with Cucumber | `cucumber/` | `@cucumber/cucumber` + Playwright library |
 
-All three cover the same scenarios: the page title is "Swag Labs", and `standard_user` can log in and land on the Products page.
+All three cover the same scenarios: the page title is "Swag Labs", `standard_user` can log in and land on the Products page, and the Products page lists 6 items.
+
+## Login session (storageState)
+
+Each approach logs in **once per run**, saves the session (cookies + localStorage) with `storageState`, and starts every test already logged in. Tests that check the login form opt out and start with an empty browser.
+
+| Approach | Logs in once | Opt out of the session |
+| --- | --- | --- |
+| Playwright Test | `tests/auth.setup.js` (the `setup` project, saved to `playwright/.auth/user.json`) | `test.use({ storageState: { cookies: [], origins: [] } })` |
+| playwright-bdd | same `setup` project (via `playwright.bdd.config.js`) | tag the feature/scenario `@logged-out` (`bdd/steps/fixtures.js`) |
+| Cucumber | `BeforeAll` in `cucumber/support/hooks.js` (kept in memory) | tag the feature/scenario `@logged-out` |
+
+If the session is missing or expired, the Products checks fail with `Session expired or missing: storageState is stale`. `playwright/.auth/` is git-ignored because it holds session cookies.
 
 ## Prerequisites
 
@@ -34,7 +46,7 @@ All three cover the same scenarios: the page title is "Swag Labs", and `standard
 
 ## 1. Playwright Test
 
-Specs live in `tests/` and use `playwright.config.js`.
+Specs live in `tests/` and use `playwright.config.js`. The `setup` project (`tests/auth.setup.js`) runs first; browser projects depend on it.
 
 ```bash
 npm test                 # all browsers selected by BROWSER
@@ -46,7 +58,7 @@ npm run report           # open the last HTML report
 
 ## 2. BDD with playwright-bdd
 
-Features are in `bdd/features/` and step definitions in `bdd/steps/`. `playwright.bdd.config.js` reuses `playwright.config.js` and swaps in the generated tests.
+Features are in `bdd/features/` and step definitions in `bdd/steps/`. Steps import `Given/When/Then` from `bdd/steps/fixtures.js`. `playwright.bdd.config.js` reuses `playwright.config.js` and swaps in the generated tests.
 
 ```bash
 npm run test:bdd         # generate specs, then run them
@@ -67,7 +79,7 @@ cucumber/
 ├── steps/               # step definitions (use this.page)
 └── support/
     ├── world.js         # custom World, loads ../.env
-    └── hooks.js         # browser per run, fresh context/page per scenario
+    └── hooks.js         # browser + login per run, fresh context/page per scenario
 ```
 
 ```bash

@@ -54,10 +54,25 @@ const browsers = (process.env.BROWSER ?? '')
   .split(',')
   .map((b) => b.trim().toLowerCase())
   .filter(Boolean);
-const projects =
+const selectedProjects =
   browsers.length === 0 || browsers.includes('all')
     ? allProjects
     : allProjects.filter((p) => browsers.includes(p.name.toLowerCase()));
+
+/**
+ * Log in once (tests/auth.setup.js) and start every test with that session.
+ * Tests that need a logged-out browser override storageState (see tests/example.spec.js).
+ * https://playwright.dev/docs/auth
+ */
+const authFile = path.resolve(__dirname, 'playwright/.auth/user.json');
+const projects = [
+  { name: 'setup', testDir: './tests', testMatch: /auth\.setup\.js/ },
+  ...selectedProjects.map((p) => ({
+    ...p,
+    use: { ...p.use, storageState: authFile },
+    dependencies: ['setup'],
+  })),
+];
 const unknown = browsers.filter(
   (b) => b !== 'all' && !allProjects.some((p) => p.name.toLowerCase() === b),
 );
