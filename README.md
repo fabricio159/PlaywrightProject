@@ -1,6 +1,6 @@
 # PlaywrightProject
 
-UI tests for [Swag Labs (saucedemo.com)](https://www.saucedemo.com/), written three ways:
+UI tests for [Swag Labs (saucedemo.com)](https://www.saucedemo.com/), written three ways, plus API tests (see [4. API tests](#4-api-tests)):
 
 | Approach | Location | Runner |
 | --- | --- | --- |
@@ -41,8 +41,10 @@ If the session is missing or expired, the Products checks fail with `Session exp
   | Variable | Purpose | Default |
   | --- | --- | --- |
   | `BASE_URL` | Site under test | `https://playwright.dev` (set to saucedemo in `.env.example`) |
+  | `API_URL` | API under test for `tests/api` | `https://restful-booker.herokuapp.com` |
   | `SAUCE_USERNAME` / `SAUCE_PASSWORD` | Login credentials | `standard_user` / `secret_sauce` |
   | `BROWSER` | `all`, `chromium`, `firefox`, `webkit` (comma-separated) | `all` |
+  | `TAGS` | `all`, or tags like `@smoke,@login` (comma-separated, runs tests with any of them) | `all` |
 
 ## 1. Playwright Test
 
@@ -95,6 +97,22 @@ Notes:
 - `BROWSER` takes a single browser here; empty or `all` means chromium. To run another browser: `BROWSER=firefox npm test`.
 - Scenarios run one at a time (no parallel workers).
 
+## 4. API tests
+
+Specs live in `tests/api/` and use the built-in `request` fixture to send HTTP calls to `API_URL`. They run in their own `api` project in `playwright.config.js`:
+
+- no browser is opened, and the `setup` login does not run first
+- they run once, not once per browser, and `BROWSER` does not filter them out
+- `TAGS` still applies (the samples are tagged `@api`)
+- browser projects ignore `tests/api/`, and BDD runs leave the `api` project out
+
+```bash
+npm run test:api         # API tests only
+npm test                 # browser tests + API tests
+```
+
+Paths in requests are relative to `API_URL`, e.g. `request.get('/booking/1')`. A spec that targets a different API overrides it with `test.use({ baseURL })` (see `tests/api/posts.spec.js`). Results go to the same HTML report.
+
 ## CI
 
-`.github/workflows/playwright.yml` runs approach 1 (`npx playwright test`) on pushes and pull requests to `main`/`master`. The BDD and Cucumber suites are not run in CI yet.
+`.github/workflows/playwright.yml` runs approach 1 (`npx playwright test` with `SKIP_API=true`) and, in a separate `api` job with no browser install, the API tests (`npm run test:api`), on pushes and pull requests to `main`/`master`. The BDD and Cucumber suites are not run in CI yet.

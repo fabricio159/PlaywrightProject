@@ -16,4 +16,6 @@ const testDir = defineBddConfig({
 export default defineConfig({
   ...baseConfig,
   testDir,
+  /* The api project has its own testDir (tests/api), so leave it out of BDD runs */
+  projects: baseConfig.projects.filter((p) => p.name !== 'api'),
 });

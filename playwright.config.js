@@ -60,18 +60,61 @@ const selectedProjects =
     : allProjects.filter((p) => browsers.includes(p.name.toLowerCase()));
 
 /**
+ * Pick tests with TAGS in .env, e.g. TAGS=@smoke or TAGS=@smoke,@login (runs tests with any of them).
+ * Empty or "all" runs every test. Applies to the BDD config too, since Gherkin tags become Playwright tags.
+ * Only set on the browser projects, so the setup project still logs in.
+ */
+const tags = (process.env.TAGS ?? '')
+  .split(',')
+  .map((t) => t.trim())
+  .filter(Boolean);
+const badTags = tags.filter((t) => t !== 'all' && !/^@[\w-]+$/.test(t));
+if (badTags.length) {
+  throw new Error(`Invalid TAGS value(s): ${badTags.join(', ')}. Tags look like @smoke`);
+}
+/* Match whole tags only: @smoke must not match @smoke-extra */
+const grep =
+  tags.length === 0 || tags.includes('all')
+    ? undefined
+    : new RegExp(`(${tags.join('|')})(?![\\w-])`);
+
+/**
  * Log in once (tests/auth.setup.js) and start every test with that session.
  * Tests that need a logged-out browser override storageState (see tests/example.spec.js).
  * https://playwright.dev/docs/auth
  */
 const authFile = path.resolve(__dirname, 'playwright/.auth/user.json');
+
+/**
+ * API tests (tests/api) use the built-in `request` fixture: no browser, no login.
+ * Included whatever BROWSER says; SKIP_API=true leaves them out (CI runs them in their own job).
+ * Run them alone with `npm run test:api`.
+ */
+const skipApi = process.env.SKIP_API === 'true';
+const apiURL = process.env.API_URL ?? 'https://restful-booker.herokuapp.com';
+if (!/^https?:\/\//.test(apiURL)) {
+  throw new Error(`Invalid API_URL value: ${apiURL}. It must start with http:// or https://`);
+}
+const apiProject = {
+  name: 'api',
+  testDir: './tests/api',
+  use: {
+    baseURL: apiURL,
+    extraHTTPHeaders: { Accept: 'application/json' },
+  },
+  grep,
+};
+
 const projects = [
   { name: 'setup', testDir: './tests', testMatch: /auth\.setup\.js/ },
   ...selectedProjects.map((p) => ({
     ...p,
     use: { ...p.use, storageState: authFile },
     dependencies: ['setup'],
+    testIgnore: /tests[\\/]api[\\/]/,
+    grep,
   })),
+  ...(skipApi ? [] : [apiProject]),
 ];
 const unknown = browsers.filter(
   (b) => b !== 'all' && !allProjects.some((p) => p.name.toLowerCase() === b),

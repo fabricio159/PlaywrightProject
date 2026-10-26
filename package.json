@@ -8,19 +8,30 @@
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",
     "test:chromium": "playwright test --project=chromium",
+    "test:api": "playwright test --project=api",
     "report": "playwright show-report",
     "test:bdd": "bddgen --config playwright.bdd.config.js && playwright test --config playwright.bdd.config.js",
     "test:bdd:headed": "bddgen --config playwright.bdd.config.js && playwright test --config playwright.bdd.config.js --headed",
-    "test:bdd:ui": "bddgen --config playwright.bdd.config.js && playwright test --config playwright.bdd.config.js --ui"
+    "test:bdd:ui": "bddgen --config playwright.bdd.config.js && playwright test --config playwright.bdd.config.js --ui",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.0",
     "@types/node": "^26.6.4",
     "dotenv": "^18.0.7",
-    "playwright-bdd": "^9.2.1"
+    "eslint": "^10.13.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-playwright": "^2.12.1",
+    "globals": "^17.13.0",
+    "playwright-bdd": "^9.2.1",
+    "prettier": "^3.9.10"
   }
 }

@@ -10,6 +10,10 @@ on:
         description: 'Base URL to test (blank = repo variable or saucedemo)'
         required: false
         type: string
+      api_url:
+        description: 'API URL for tests/api (blank = repo variable or restful-booker)'
+        required: false
+        type: string
       browser:
         description: 'Browser(s) for Playwright + BDD'
         required: false
@@ -22,6 +26,10 @@ on:
         type: choice
         default: chromium
         options: [chromium, firefox, webkit]
+      tags:
+        description: 'Tag(s) to run, e.g. @smoke,@login (blank = all)'
+        required: false
+        type: string
       sauce_username:
         description: 'Login username (blank = secret or standard_user)'
         required: false
@@ -36,10 +44,12 @@ on:
 # On push/PR runs the inputs are empty, so the later values apply.
 env:
   BASE_URL: ${{ inputs.base_url || vars.BASE_URL || 'https://www.saucedemo.com/' }}
+  API_URL: ${{ inputs.api_url || vars.API_URL || 'https://restful-booker.herokuapp.com' }}
   SAUCE_USERNAME: ${{ inputs.sauce_username || secrets.SAUCE_USERNAME || 'standard_user' }}
   # Inputs are not secret: anyone who can see the run can see a typed password
   SAUCE_PASSWORD: ${{ inputs.sauce_password || secrets.SAUCE_PASSWORD || 'secret_sauce' }}
   BROWSER: ${{ inputs.browser || vars.BROWSER || 'all' }}
+  TAGS: ${{ inputs.tags || vars.TAGS || 'all' }}
 
 jobs:
   playwright:
@@ -56,7 +66,10 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
+      # API tests run in the api job below
       run: npx playwright test
+      env:
+        SKIP_API: 'true'
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
@@ -70,6 +83,28 @@ jobs:
       if: ${{ !cancelled() }}
       with:
         name: bdd-report
+        path: playwright-report/
+        retention-days: 30
+
+  api:
+    timeout-minutes: 15
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: lts/*
+        cache: npm
+    - name: Install dependencies
+      run: npm ci
+    # No browser install: API tests only use the request fixture
+    - name: Run API tests
+      # TAGS like @login match no API tests; don't fail the job for that
+      run: npm run test:api -- --pass-with-no-tests
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: api-report
         path: playwright-report/
         retention-days: 30
 
