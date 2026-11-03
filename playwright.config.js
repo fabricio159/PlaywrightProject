@@ -61,22 +61,21 @@ const selectedProjects =
 
 /**
  * Pick tests with TAGS in .env, e.g. TAGS=@smoke or TAGS=@smoke,@login (runs tests with any of them).
- * Empty or "all" runs every test. Applies to the BDD config too, since Gherkin tags become Playwright tags.
- * Only set on the browser projects, so the setup project still logs in.
+ * Empty or "all" (any case) runs every test. Applies to the BDD config too, since Gherkin tags become Playwright tags.
+ * Same rules as cucumber/cucumber.js. Only set on the browser projects, so the setup project still logs in.
  */
 const tags = (process.env.TAGS ?? '')
   .split(',')
   .map((t) => t.trim())
   .filter(Boolean);
-const badTags = tags.filter((t) => t !== 'all' && !/^@[\w-]+$/.test(t));
+const isAll = (t) => t.toLowerCase() === 'all';
+const badTags = tags.filter((t) => !isAll(t) && !/^@[\w-]+$/.test(t));
 if (badTags.length) {
   throw new Error(`Invalid TAGS value(s): ${badTags.join(', ')}. Tags look like @smoke`);
 }
 /* Match whole tags only: @smoke must not match @smoke-extra */
 const grep =
-  tags.length === 0 || tags.includes('all')
-    ? undefined
-    : new RegExp(`(${tags.join('|')})(?![\\w-])`);
+  tags.length === 0 || tags.some(isAll) ? undefined : new RegExp(`(${tags.join('|')})(?![\\w-])`);
 
 /**
  * Log in once (tests/auth.setup.js) and start every test with that session.
@@ -159,4 +158,3 @@ export default defineConfig({
   //   reuseExistingServer: !process.env.CI,
   // },
 });
-
