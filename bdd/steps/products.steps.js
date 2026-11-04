@@ -7,6 +7,15 @@ Given('I open the Products page', async ({ page }) => {
   await expect(page.locator('[data-test="title"]'), 'Session expired or missing: storageState is stale').toHaveText('Products');
 });
 
+Given('I open the Products lightweight page', async ({ page }) => {
+  await page.route('**/*', (route) => 
+    route.request().resourceType() === 'image' ? route.abort() : route.continue(),
+  );
+  await page.goto('/inventory.html');
+  // Without a valid session Saucedemo redirects to the login page, so the title never shows.
+  await expect(page.locator('[data-test="title"]'), 'Session expired or missing: storageState is stale').toHaveText('Products');
+});
+
 Then('I should see {int} products', async ({ page }, count) => {
   await expect(page.locator('[data-test="inventory-item"]')).toHaveCount(count);
 });
