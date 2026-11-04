@@ -2,12 +2,13 @@ import { Given, When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
 import { logIn } from '../support/world.js';
 
+// this.loginPage / this.productsPage are lazy getters on the World (support/world.js).
 Given('I am on the login page', async function () {
-  await this.page.goto('/');
+  await this.loginPage.goto();
 });
 
 When('I log in as {string} with password {string}', async function (username, password) {
-  await logIn(this.page, username, password);
+  await this.loginPage.login(username, password);
 });
 
 When('I log in with the credentials from .env', async function () {
@@ -24,5 +25,5 @@ Then('the page title should be {string}', async function (title) {
 
 Then('I should see the Products page', async function () {
   await expect(this.page).toHaveURL('/inventory.html');
-  await expect(this.page.locator('[data-test="title"]')).toHaveText('Products');
+  await expect(this.productsPage.title).toHaveText('Products');
 });

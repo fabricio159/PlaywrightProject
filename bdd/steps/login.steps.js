@@ -1,17 +1,15 @@
 import { expect } from '@playwright/test';
 import { Given, When, Then } from './fixtures.js';
 
-Given('I am on the login page', async ({ page }) => {
-  await page.goto('/');
+Given('I am on the login page', async ({ loginPage }) => {
+  await loginPage.goto();
 });
 
-When('I log in as {string} with password {string}', async ({ page }, username, password) => {
-  await page.getByPlaceholder('Username').fill(username);
-  await page.getByPlaceholder('Password').fill(password);
-  await page.getByRole('button', { name: 'Login' }).click();
+When('I log in as {string} with password {string}', async ({ loginPage }, username, password) => {
+  await loginPage.login(username, password);
 });
 
-Then('I should see the Products page', async ({ page }) => {
+Then('I should see the Products page', async ({ page, productsPage }) => {
   await expect(page).toHaveURL('/inventory.html');
-  await expect(page.locator('[data-test="title"]')).toHaveText('Products');
+  await expect(productsPage.title).toHaveText('Products');
 });

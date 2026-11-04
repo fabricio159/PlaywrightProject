@@ -1,5 +1,5 @@
 # Port of bdd/features/login.feature
-@logged-out
+@login @logged-out
 Feature: Login
 
   Scenario: Login as standard_user
