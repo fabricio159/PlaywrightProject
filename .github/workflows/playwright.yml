@@ -1,9 +1,9 @@
 name: Playwright Tests
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       base_url:
@@ -56,57 +56,57 @@ jobs:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-        cache: npm
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps
-    - name: Run Playwright tests
-      # API tests run in the api job below
-      run: npx playwright test
-      env:
-        SKIP_API: 'true'
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: playwright-report
-        path: playwright-report/
-        retention-days: 30
-    - name: Run BDD tests
-      if: ${{ !cancelled() }}
-      run: npm run test:bdd
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: bdd-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        # API tests run in the api job below
+        run: npx playwright test
+        env:
+          SKIP_API: 'true'
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+      - name: Run BDD tests
+        if: ${{ !cancelled() }}
+        run: npm run test:bdd
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: bdd-report
+          path: playwright-report/
+          retention-days: 30
 
   api:
     timeout-minutes: 15
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-        cache: npm
-    - name: Install dependencies
-      run: npm ci
-    # No browser install: API tests only use the request fixture
-    - name: Run API tests
-      # TAGS like @login match no API tests; don't fail the job for that
-      run: npm run test:api -- --pass-with-no-tests
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: api-report
-        path: playwright-report/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      # No browser install: API tests only use the request fixture
+      - name: Run API tests
+        # TAGS like @login match no API tests; don't fail the job for that
+        run: npm run test:api -- --pass-with-no-tests
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: api-report
+          path: playwright-report/
+          retention-days: 30
 
   cucumber:
     timeout-minutes: 30
@@ -118,21 +118,21 @@ jobs:
       # cucumber runs one browser per run; "all" falls back to chromium
       BROWSER: ${{ inputs.cucumber_browser || vars.CUCUMBER_BROWSER || 'chromium' }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
-      with:
-        node-version: lts/*
-        cache: npm
-        cache-dependency-path: cucumber/package-lock.json
-    - name: Install dependencies
-      run: npm ci
-    - name: Install Playwright Browsers
-      run: npx playwright install --with-deps ${{ env.BROWSER }}
-    - name: Run Cucumber tests
-      run: npm test
-    - uses: actions/upload-artifact@v4
-      if: ${{ !cancelled() }}
-      with:
-        name: cucumber-report
-        path: cucumber/reports/
-        retention-days: 30
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: cucumber/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps ${{ env.BROWSER }}
+      - name: Run Cucumber tests
+        run: npm test
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: cucumber-report
+          path: cucumber/reports/
+          retention-days: 30

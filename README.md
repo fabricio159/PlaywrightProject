@@ -2,11 +2,11 @@
 
 UI tests for [Swag Labs (saucedemo.com)](https://www.saucedemo.com/), written three ways, plus API tests (see [4. API tests](#4-api-tests)):
 
-| Approach | Location | Runner |
-| --- | --- | --- |
-| 1. Playwright Test | `tests/` | `@playwright/test` |
-| 2. BDD with playwright-bdd | `bdd/` | `playwright-bdd` + `@playwright/test` |
-| 3. BDD with Cucumber | `cucumber/` | `@cucumber/cucumber` + Playwright library |
+| Approach                   | Location    | Runner                                    |
+| -------------------------- | ----------- | ----------------------------------------- |
+| 1. Playwright Test         | `tests/`    | `@playwright/test`                        |
+| 2. BDD with playwright-bdd | `bdd/`      | `playwright-bdd` + `@playwright/test`     |
+| 3. BDD with Cucumber       | `cucumber/` | `@cucumber/cucumber` + Playwright library |
 
 All three cover the same scenarios: the page title is "Swag Labs", `standard_user` can log in and land on the Products page, and the Products page lists 6 items.
 
@@ -14,11 +14,11 @@ All three cover the same scenarios: the page title is "Swag Labs", `standard_use
 
 Each approach logs in **once per run**, saves the session (cookies + localStorage) with `storageState`, and starts every test already logged in. Tests that check the login form opt out and start with an empty browser.
 
-| Approach | Logs in once | Opt out of the session |
-| --- | --- | --- |
-| Playwright Test | `tests/auth.setup.js` (the `setup` project, saved to `playwright/.auth/user.json`) | `test.use({ storageState: { cookies: [], origins: [] } })` |
-| playwright-bdd | same `setup` project (via `playwright.bdd.config.js`) | tag the feature/scenario `@logged-out` (`bdd/steps/fixtures.js`) |
-| Cucumber | `BeforeAll` in `cucumber/support/hooks.js` (kept in memory) | tag the feature/scenario `@logged-out` |
+| Approach        | Logs in once                                                                       | Opt out of the session                                           |
+| --------------- | ---------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Playwright Test | `tests/auth.setup.js` (the `setup` project, saved to `playwright/.auth/user.json`) | `test.use({ storageState: { cookies: [], origins: [] } })`       |
+| playwright-bdd  | same `setup` project (via `playwright.bdd.config.js`)                              | tag the feature/scenario `@logged-out` (`bdd/steps/fixtures.js`) |
+| Cucumber        | `BeforeAll` in `cucumber/support/hooks.js` (kept in memory)                        | tag the feature/scenario `@logged-out`                           |
 
 If the session is missing or expired, the Products checks fail with `Session expired or missing: storageState is stale`. `playwright/.auth/` is git-ignored because it holds session cookies.
 
@@ -38,13 +38,13 @@ If the session is missing or expired, the Products checks fail with `Session exp
   cp .env.example .env
   ```
 
-  | Variable | Purpose | Default |
-  | --- | --- | --- |
-  | `BASE_URL` | Site under test | `https://playwright.dev` (set to saucedemo in `.env.example`) |
-  | `API_URL` | API under test for `tests/api` | `https://restful-booker.herokuapp.com` |
-  | `SAUCE_USERNAME` / `SAUCE_PASSWORD` | Login credentials | `standard_user` / `secret_sauce` |
-  | `BROWSER` | `all`, `chromium`, `firefox`, `webkit` (comma-separated) | `all` |
-  | `TAGS` | `all`, or tags like `@smoke,@login` (comma-separated, runs tests with any of them) | `all` |
+  | Variable                            | Purpose                                                                            | Default                                                       |
+  | ----------------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+  | `BASE_URL`                          | Site under test                                                                    | `https://playwright.dev` (set to saucedemo in `.env.example`) |
+  | `API_URL`                           | API under test for `tests/api`                                                     | `https://restful-booker.herokuapp.com`                        |
+  | `SAUCE_USERNAME` / `SAUCE_PASSWORD` | Login credentials                                                                  | `standard_user` / `secret_sauce`                              |
+  | `BROWSER`                           | `all`, `chromium`, `firefox`, `webkit` (comma-separated)                           | `all`                                                         |
+  | `TAGS`                              | `all`, or tags like `@smoke,@login` (comma-separated, runs tests with any of them) | `all`                                                         |
 
 ## 1. Playwright Test
 
@@ -94,6 +94,7 @@ npm run test:headed      # with a visible browser
 The HTML report is written to `cucumber/reports/cucumber-report.html`. Failed scenarios get a screenshot attached.
 
 Notes:
+
 - `BROWSER` takes a single browser here; empty or `all` means chromium. To run another browser: `BROWSER=firefox npm test`.
 - Scenarios run one at a time (no parallel workers).
 

@@ -6,3 +6,4 @@ playwright/.auth/
 .features-gen/
 cucumber/reports/
 package-lock.json
+.playwright-mcp/

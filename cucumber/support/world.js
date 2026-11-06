@@ -23,7 +23,9 @@ export function browserName() {
   const name = (process.env.BROWSER ?? '').trim().toLowerCase();
   if (!name || name === 'all') return 'chromium';
   if (!(name in browserTypes)) {
-    throw new Error(`Unsupported BROWSER for cucumber: ${name}. Use one of: ${Object.keys(browserTypes).join(', ')}`);
+    throw new Error(
+      `Unsupported BROWSER for cucumber: ${name}. Use one of: ${Object.keys(browserTypes).join(', ')}`,
+    );
   }
   return name;
 }

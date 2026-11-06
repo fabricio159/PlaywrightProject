@@ -10,6 +10,9 @@ test('products page lists items', { tag: '@Products' }, async ({ page }) => {
   await page.goto('/inventory.html');
 
   // Without a valid session Saucedemo redirects to the login page, so the title never shows.
-  await expect(page.locator('[data-test="title"]'), 'Session expired or missing: storageState is stale').toHaveText('Products');
+  await expect(
+    page.locator('[data-test="title"]'),
+    'Session expired or missing: storageState is stale',
+  ).toHaveText('Products');
   await expect(page.locator('[data-test="inventory-item"]')).toHaveCount(6);
 });

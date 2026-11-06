@@ -11,7 +11,11 @@ BeforeAll(async function () {
   const context = await browser.newContext({ baseURL });
   const page = await context.newPage();
   await page.goto('/');
-  await logIn(page, process.env.SAUCE_USERNAME ?? 'standard_user', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
+  await logIn(
+    page,
+    process.env.SAUCE_USERNAME ?? 'standard_user',
+    process.env.SAUCE_PASSWORD ?? 'secret_sauce',
+  );
   await page.waitForURL('**/inventory.html');
   storageState = await context.storageState();
   await context.close();
@@ -27,7 +31,10 @@ AfterAll(async function () {
  */
 Before(async function ({ pickle }) {
   const loggedOut = pickle.tags.some((t) => t.name === '@logged-out');
-  this.context = await browser.newContext({ baseURL, storageState: loggedOut ? undefined : storageState });
+  this.context = await browser.newContext({
+    baseURL,
+    storageState: loggedOut ? undefined : storageState,
+  });
   this.page = await this.context.newPage();
   console.log(`worker ${process.env.CUCUMBER_WORKER_ID} | ${pickle.name}`);
 });
