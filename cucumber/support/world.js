@@ -3,6 +3,9 @@ import { fileURLToPath } from 'node:url';
 import dotenv from 'dotenv';
 import { World, setWorldConstructor, setDefaultTimeout } from '@cucumber/cucumber';
 import { chromium, firefox, webkit } from '@playwright/test';
+import { LoginPage } from '../../pages/LoginPage.js';
+import { ProductsPage } from '../../pages/ProductsPage.js';
+import { CartPage } from '../../pages/CartPage.js';
 
 /* Reuse the project's root .env (BASE_URL, SAUCE_USERNAME, BROWSER, ...) */
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -33,7 +36,24 @@ export async function logIn(page, username, password) {
   await page.getByRole('button', { name: 'Login' }).click();
 }
 
-/** Per-scenario state shared by steps through `this` (context and page are set in hooks.js). */
-class CustomWorld extends World {}
+/**
+ * Per-scenario state shared by steps through `this` (context and page are set in hooks.js).
+ * Page objects (shared with ../tests and ../bdd) are lazy getters: each one is created the first
+ * time a step reads it, then reused for the rest of the scenario. Cucumber builds a new World per
+ * scenario, so nothing leaks between scenarios.
+ */
+class CustomWorld extends World {
+  get loginPage() {
+    return (this._loginPage ??= new LoginPage(this.page));
+  }
+
+  get productsPage() {
+    return (this._productsPage ??= new ProductsPage(this.page));
+  }
+
+  get cartPage() {
+    return (this._cartPage ??= new CartPage(this.page));
+  }
+}
 
 setWorldConstructor(CustomWorld);
