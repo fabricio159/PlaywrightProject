@@ -27,3 +27,22 @@ Then('I should see the Products page', async function () {
   await expect(this.page).toHaveURL('/inventory.html');
   await expect(this.productsPage.title).toHaveText('Products');
 });
+
+When('I go to {string}', async function (url) {
+  await this.page.goto(url);
+});
+
+// Failed logins (and logged-out redirects) leave you on the login page with an error.
+Then('I should see the login error {string}', async function (message) {
+  await expect(this.page).toHaveURL('/');
+  await expect(this.loginPage.error).toHaveText(message);
+});
+
+When('I dismiss the login error', async function () {
+  await expect(this.loginPage.error).toBeVisible();
+  await this.loginPage.dismissErrorButton.click();
+});
+
+Then('the login error should not be shown', async function () {
+  await expect(this.loginPage.error).toBeHidden();
+});
