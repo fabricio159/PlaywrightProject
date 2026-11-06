@@ -5,6 +5,7 @@ export class LoginPage {
     this.password = page.getByPlaceholder('Password');
     this.loginButton = page.getByRole('button', { name: 'Login' });
     this.error = page.locator('[data-test="error"]');
+    this.dismissErrorButton = page.locator('[data-test="error-button"]');
   }
 
   async goto() {
