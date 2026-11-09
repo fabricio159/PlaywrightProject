@@ -1,8 +1,17 @@
 import { test, expect } from '../fixtures.js';
 
+// Tags shared by every test in this file; each test adds its own on top.
+const loginPageTags = [
+  '@LoginPage',
+  '@SmokeTest',
+  '@RegressionTest',
+  '@InventoryPage',
+  '@ProductsPage',
+];
+
 test(
   'login page loads with title, username and password fields, and Login button',
-  { tag: ['@login', '@smoke', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
 
@@ -19,7 +28,7 @@ test(
 // @logged-out: this test fills the login form, so it starts with an empty browser.
 test(
   'standard_user can log in and lands on Products',
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage, productsPage }) => {
     await loginPage.goto();
     await loginPage.login(
@@ -34,7 +43,7 @@ test(
 
 test(
   'login with a wrong password shows an error message',
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login(process.env.SAUCE_USERNAME ?? 'standard_user', 'wrong_password');
@@ -49,7 +58,7 @@ test(
 
 test(
   'login with an unknown username shows an error message',
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login('unknown_user', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
@@ -64,7 +73,7 @@ test(
 
 test(
   "login with an empty username shows 'Username is required'",
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login('', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
@@ -77,7 +86,7 @@ test(
 
 test(
   "login with an empty password shows 'Password is required'",
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login(process.env.SAUCE_USERNAME ?? 'standard_user', '');
@@ -90,33 +99,35 @@ test(
 
 test(
   'login with locked_out_user shows a locked-out error',
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login('locked_out_user', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
 
     await expect(loginPage.error).toBeVisible();
-    await expect(loginPage.error).toHaveText(
-      'Epic sadface: Sorry, this user has been locked out.',
-    );
+    await expect(loginPage.error).toHaveText('Epic sadface: Sorry, this user has been locked out.');
     await expect(page).not.toHaveURL(/inventory\.html/);
   },
 );
 
-test('error message can be dismissed', { tag: ['@login', '@logged-out'] }, async ({ loginPage }) => {
-  await loginPage.goto();
-  await loginPage.login('', '');
-  await expect(loginPage.error).toBeVisible();
+test(
+  'error message can be dismissed',
+  { tag: [...loginPageTags, '@logged-out'] },
+  async ({ loginPage }) => {
+    await loginPage.goto();
+    await loginPage.login('', '');
+    await expect(loginPage.error).toBeVisible();
 
-  await loginPage.dismissError();
+    await loginPage.dismissError();
 
-  await expect(loginPage.error).toBeHidden();
-  await expect(loginPage.loginButton).toBeVisible();
-});
+    await expect(loginPage.error).toBeHidden();
+    await expect(loginPage.loginButton).toBeVisible();
+  },
+);
 
 test(
   'accessing /inventory.html without logging in redirects to login with an error',
-  { tag: ['@login', '@logged-out'] },
+  { tag: [...loginPageTags, '@logged-out'] },
   async ({ page, loginPage, productsPage }) => {
     await productsPage.goto();
 
@@ -155,7 +166,7 @@ for (const { username, quirk } of specialUsers) {
   test(
     `special user ${username} can log in`,
     {
-      tag: ['@login', '@logged-out', '@special-users'],
+      tag: [...loginPageTags, '@logged-out', '@special-users'],
       annotation: { type: 'Known quirk', description: quirk },
     },
     async ({ page, loginPage, productsPage }) => {

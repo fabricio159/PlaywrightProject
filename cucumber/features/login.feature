@@ -1,8 +1,7 @@
 # Port of bdd/features/login.feature
-@login @logged-out
+@LoginPage @SmokeTest @RegressionTest @InventoryPage @ProductsPage @logged-out
 Feature: Login
 
-  @smoke
   Scenario: Login page loads with title, fields and Login button
     Given I am on the login page
     Then the page title should be "Swag Labs"
