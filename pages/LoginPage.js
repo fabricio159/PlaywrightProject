@@ -5,6 +5,7 @@ export class LoginPage {
     this.password = page.getByPlaceholder('Password');
     this.loginButton = page.getByRole('button', { name: 'Login' });
     this.error = page.locator('[data-test="error"]');
+    this.errorCloseButton = page.locator('[data-test="error-button"]');
   }
 
   async goto() {
@@ -15,5 +16,10 @@ export class LoginPage {
     await this.username.fill(username);
     await this.password.fill(password);
     await this.loginButton.click();
+  }
+
+  // The "X" button on the error message.
+  async dismissError() {
+    await this.errorCloseButton.click();
   }
 }
