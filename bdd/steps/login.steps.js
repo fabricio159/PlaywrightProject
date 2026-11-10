@@ -48,8 +48,10 @@ Then('I should not see a login error', async ({ loginPage }) => {
   await expect(loginPage.error).toBeHidden();
 });
 
-// Unlike "I open the Products page", this step expects no session (feature is tagged @logged-out).
-When('I go to the Products page without logging in', async ({ productsPage }) => {
+// Unlike "I open the Products page", this step drops the session first.
+// Saucedemo keeps it in a cookie, so clearing cookies logs the browser out.
+When('I go to the Products page without logging in', async ({ page, productsPage }) => {
+  await page.context().clearCookies();
   await productsPage.goto();
 });
 

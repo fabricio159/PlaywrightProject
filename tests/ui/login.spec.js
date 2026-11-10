@@ -1,17 +1,8 @@
 import { test, expect } from '../fixtures.js';
 
-// Tags shared by every test in this file; each test adds its own on top.
-const loginPageTags = [
-  '@LoginPage',
-  '@SmokeTest',
-  '@RegressionTest',
-  '@InventoryPage',
-  '@ProductsPage',
-];
-
 test(
   'login page loads with title, username and password fields, and Login button',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
 
@@ -25,10 +16,9 @@ test(
   },
 );
 
-// @logged-out: this test fills the login form, so it starts with an empty browser.
 test(
   'standard_user can log in and lands on Products',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest', '@ProductsPage'] },
   async ({ page, loginPage, productsPage }) => {
     await loginPage.goto();
     await loginPage.login(
@@ -43,7 +33,7 @@ test(
 
 test(
   'login with a wrong password shows an error message',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login(process.env.SAUCE_USERNAME ?? 'standard_user', 'wrong_password');
@@ -58,7 +48,7 @@ test(
 
 test(
   'login with an unknown username shows an error message',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login('unknown_user', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
@@ -73,7 +63,7 @@ test(
 
 test(
   "login with an empty username shows 'Username is required'",
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login('', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
@@ -86,7 +76,7 @@ test(
 
 test(
   "login with an empty password shows 'Password is required'",
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login(process.env.SAUCE_USERNAME ?? 'standard_user', '');
@@ -99,7 +89,7 @@ test(
 
 test(
   'login with locked_out_user shows a locked-out error',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ page, loginPage }) => {
     await loginPage.goto();
     await loginPage.login('locked_out_user', process.env.SAUCE_PASSWORD ?? 'secret_sauce');
@@ -112,7 +102,7 @@ test(
 
 test(
   'error message can be dismissed',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest'] },
   async ({ loginPage }) => {
     await loginPage.goto();
     await loginPage.login('', '');
@@ -127,8 +117,10 @@ test(
 
 test(
   'accessing /inventory.html without logging in redirects to login with an error',
-  { tag: [...loginPageTags, '@logged-out'] },
+  { tag: ['@LoginPage', '@SmokeTest', '@RegressionTest', '@InventoryPage'] },
   async ({ page, loginPage, productsPage }) => {
+    // Tests start logged in; Saucedemo keeps the session in a cookie, so clear it first.
+    await page.context().clearCookies();
     await productsPage.goto();
 
     await expect(page).toHaveURL('/');
@@ -166,7 +158,7 @@ for (const { username, quirk } of specialUsers) {
   test(
     `special user ${username} can log in`,
     {
-      tag: [...loginPageTags, '@logged-out', '@special-users'],
+      tag: ['@LoginPage', '@SmokeTest', '@RegressionTest', '@InventoryPage', '@ProductsPage'],
       annotation: { type: 'Known quirk', description: quirk },
     },
     async ({ page, loginPage, productsPage }) => {
