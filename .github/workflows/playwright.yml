@@ -65,6 +65,15 @@ jobs:
       run: npm ci
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
+    # Allure history: restore the newest saved copy, so the report shows trends across runs
+    - name: Restore Allure history
+      uses: actions/cache/restore@v4
+      with:
+        path: allure-history.jsonl
+        key: allure-history-playwright-${{ github.ref_name }}-${{ github.run_id }}
+        restore-keys: |
+          allure-history-playwright-${{ github.ref_name }}-
+          allure-history-playwright-
     - name: Run Playwright tests
       # API tests run in the api job below
       run: npx playwright test
@@ -85,6 +94,23 @@ jobs:
         name: bdd-report
         path: playwright-report/
         retention-days: 30
+    # Playwright and BDD runs both write to allure-results/, so this is one combined report
+    - name: Generate Allure report
+      if: ${{ !cancelled() }}
+      run: npm run allure:generate
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: allure-report
+        path: allure-report/
+        retention-days: 30
+    # Each run saves under its own key (caches can't be overwritten); old ones expire after 7 days unused
+    - name: Save Allure history
+      if: ${{ !cancelled() && hashFiles('allure-history.jsonl') != '' }}
+      uses: actions/cache/save@v4
+      with:
+        path: allure-history.jsonl
+        key: allure-history-playwright-${{ github.ref_name }}-${{ github.run_id }}
 
   api:
     timeout-minutes: 15
@@ -98,6 +124,15 @@ jobs:
     - name: Install dependencies
       run: npm ci
     # No browser install: API tests only use the request fixture
+    # Allure history: restore the newest saved copy, so the report shows trends across runs
+    - name: Restore Allure history
+      uses: actions/cache/restore@v4
+      with:
+        path: allure-history.jsonl
+        key: allure-history-api-${{ github.ref_name }}-${{ github.run_id }}
+        restore-keys: |
+          allure-history-api-${{ github.ref_name }}-
+          allure-history-api-
     - name: Run API tests
       # TAGS like @login match no API tests; don't fail the job for that
       run: npm run test:api -- --pass-with-no-tests
@@ -107,6 +142,22 @@ jobs:
         name: api-report
         path: playwright-report/
         retention-days: 30
+    - name: Generate Allure report
+      if: ${{ !cancelled() }}
+      run: npm run allure:generate
+    - uses: actions/upload-artifact@v4
+      if: ${{ !cancelled() }}
+      with:
+        name: api-allure-report
+        path: allure-report/
+        retention-days: 30
+    # Each run saves under its own key (caches can't be overwritten); old ones expire after 7 days unused
+    - name: Save Allure history
+      if: ${{ !cancelled() && hashFiles('allure-history.jsonl') != '' }}
+      uses: actions/cache/save@v4
+      with:
+        path: allure-history.jsonl
+        key: allure-history-api-${{ github.ref_name }}-${{ github.run_id }}
 
   cucumber:
     timeout-minutes: 30
@@ -123,16 +174,41 @@ jobs:
       with:
         node-version: lts/*
         cache: npm
-        cache-dependency-path: cucumber/package-lock.json
+        cache-dependency-path: |
+          package-lock.json
+          cucumber/package-lock.json
+    # The shared page objects (../pages) import allure-js-commons, which Node resolves from the root node_modules
+    - name: Install root dependencies
+      working-directory: .
+      run: npm ci
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps ${{ env.BROWSER }}
+    # Allure history: restore the newest saved copy, so the report shows trends across runs
+    - name: Restore Allure history
+      uses: actions/cache/restore@v4
+      with:
+        path: cucumber/reports/allure-history.jsonl
+        key: allure-history-cucumber-${{ github.ref_name }}-${{ github.run_id }}
+        restore-keys: |
+          allure-history-cucumber-${{ github.ref_name }}-
+          allure-history-cucumber-
     - name: Run Cucumber tests
       run: npm test
+    - name: Generate Allure report
+      if: ${{ !cancelled() }}
+      run: npm run allure:generate
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
         name: cucumber-report
         path: cucumber/reports/
         retention-days: 30
+    # Each run saves under its own key (caches can't be overwritten); old ones expire after 7 days unused
+    - name: Save Allure history
+      if: ${{ !cancelled() && hashFiles('cucumber/reports/allure-history.jsonl') != '' }}
+      uses: actions/cache/save@v4
+      with:
+        path: cucumber/reports/allure-history.jsonl
+        key: allure-history-cucumber-${{ github.ref_name }}-${{ github.run_id }}

@@ -1,9 +1,16 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // JSONPlaceholder: https://jsonplaceholder.typicode.com
 // This file targets a different API than API_URL, so it overrides baseURL.
 // No browser is opened and no login is needed.
 test.use({ baseURL: 'https://jsonplaceholder.typicode.com' });
+
+// This file uses @playwright/test directly (no shared fixtures), so it sets its own Allure labels.
+test.beforeEach(async () => {
+  await allure.epic('JSONPlaceholder API');
+  await allure.feature('Posts');
+});
 
 test('GET /posts/1 returns the post', { tag: ['@api', '@smoke'] }, async ({ request }) => {
   const res = await request.get('/posts/1');

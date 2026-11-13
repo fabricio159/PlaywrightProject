@@ -1,6 +1,7 @@
 import { LoginPage } from './LoginPage.js';
 import { ProductsPage } from './ProductsPage.js';
 import { CartPage } from './CartPage.js';
+export { allureFixtures } from './allure.js';
 
 const LOGGED_OUT = { cookies: [], origins: [] };
 
