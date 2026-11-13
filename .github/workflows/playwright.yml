@@ -174,7 +174,13 @@ jobs:
       with:
         node-version: lts/*
         cache: npm
-        cache-dependency-path: cucumber/package-lock.json
+        cache-dependency-path: |
+          package-lock.json
+          cucumber/package-lock.json
+    # The shared page objects (../pages) import allure-js-commons, which Node resolves from the root node_modules
+    - name: Install root dependencies
+      working-directory: .
+      run: npm ci
     - name: Install dependencies
       run: npm ci
     - name: Install Playwright Browsers

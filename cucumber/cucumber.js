@@ -34,7 +34,8 @@ export default {
     'pretty',
     'html:reports/cucumber-report.html',
     'json:reports/cucumber-report.json',
-    'allure-cucumberjs/reporter',
+    /* Needs its own output file: formatters without one share stdout, and only the last one is used (it would hide pretty) */
+    'allure-cucumberjs/reporter:reports/allure-reporter.txt',
   ],
   formatOptions: {
     resultsDir: 'reports/allure-results',
