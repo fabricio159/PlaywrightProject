@@ -17,3 +17,7 @@ node_modules/
 
 # claude
 .claude
+# Allure
+/allure-results/
+/allure-report/
+/allure-history.jsonl

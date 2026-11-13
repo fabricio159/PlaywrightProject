@@ -21,12 +21,30 @@ if (badTags.length) {
   throw new Error(`Invalid TAGS value(s): ${badTags.join(', ')}. Tags look like @smoke`);
 }
 
+/* Jira site for Allure issue links, same variable as playwright.config.js */
+const jiraURL = (process.env.JIRA_URL ?? 'https://your-site.atlassian.net').replace(/\/+$/, '');
+
 export default {
   paths: ['features/**/*.feature'],
   tags: tags.length === 0 || tags.some(isAll) ? '' : tags.join(' or '),
   import: ['support/**/*.js', 'steps/**/*.js'],
-  /* Formatters: pretty in the terminal (like Playwright's list), HTML to browse, JSON for tools */
-  format: ['pretty', 'html:reports/cucumber-report.html', 'json:reports/cucumber-report.json'],
+  /* Formatters: pretty in the terminal (like Playwright's list), HTML to browse, JSON for tools,
+   * Allure results (build the report with `npm run allure:generate`). https://allurereport.org/docs/cucumberjs/ */
+  format: [
+    'pretty',
+    'html:reports/cucumber-report.html',
+    'json:reports/cucumber-report.json',
+    'allure-cucumberjs/reporter',
+  ],
+  formatOptions: {
+    resultsDir: 'reports/allure-results',
+    /* Gherkin tags like @issue:SCRUM-24 become Jira links */
+    links: {
+      issue: { pattern: [/@issue:(.*)/], urlTemplate: `${jiraURL}/browse/%s`, nameTemplate: '%s' },
+    },
+    /* Gherkin tags like @severity:critical become the severity label */
+    labels: [{ pattern: [/@severity:(.*)/], name: 'severity' }],
+  },
   /* Retry on CI only, like playwright.config.js */
   retry: process.env.CI ? 2 : 0,
   parallel: Number(process.env.PARALLEL_NODES ?? 1),

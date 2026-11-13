@@ -3,7 +3,14 @@ import { test, expect } from '../fixtures.js';
 // @logged-out: this test fills the login form, so it starts with an empty browser.
 test(
   'standard_user can log in and lands on Products',
-  { tag: ['@login', '@logged-out'] },
+  {
+    tag: ['@login', '@logged-out'],
+    annotation: [
+      { type: 'allure.label.feature', description: 'Login' },
+      { type: 'allure.label.story', description: 'Log in with valid credentials' },
+      { type: 'allure.label.severity', description: 'blocker' },
+    ],
+  },
   async ({ page, loginPage, productsPage }) => {
     await loginPage.goto();
     await loginPage.login(

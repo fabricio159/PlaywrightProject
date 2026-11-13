@@ -12,6 +12,8 @@ export default [
       'playwright/.auth/**',
       '.features-gen/**',
       'cucumber/reports/**',
+      'allure-results/**',
+      'allure-report/**',
     ],
   },
   js.configs.recommended,

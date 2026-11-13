@@ -6,6 +6,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 import dotenv from 'dotenv';
 import path from 'path';
+import os from 'os';
 dotenv.config({ path: path.resolve(__dirname, '.env'), quiet: true });
 
 /* Configure projects for major browsers */
@@ -104,6 +105,10 @@ if (unknown.length) {
   );
 }
 
+const baseURL = process.env.BASE_URL ?? 'https://playwright.dev';
+/* Jira site for Allure issue links, e.g. JIRA_URL=https://your-site.atlassian.net */
+const jiraURL = (process.env.JIRA_URL ?? 'https://your-site.atlassian.net').replace(/\/+$/, '');
+
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
@@ -117,16 +122,48 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
-  /* Reporters: list in the terminal, HTML to browse, JSON for tools. See https://playwright.dev/docs/test-reporters
-   * JSON goes after HTML: the HTML reporter clears playwright-report/ when it writes. */
-  reporter: [['list'], ['html'], ['json', { outputFile: 'playwright-report/results.json' }]],
+  /* Reporters: list in the terminal, HTML to browse, JSON for tools, Allure. See https://playwright.dev/docs/test-reporters
+   * JSON goes after HTML: the HTML reporter clears playwright-report/ when it writes.
+   * Allure writes raw results to allure-results/ (outside playwright-report/ for the same reason);
+   * build the report with `npm run allure:generate`. https://allurereport.org/docs/playwright/ */
+  reporter: [
+    ['list'],
+    ['html'],
+    ['json', { outputFile: 'playwright-report/results.json' }],
+    [
+      'allure-playwright',
+      {
+        resultsDir: 'allure-results',
+        /* Include Playwright's own steps (clicks, fills, expects) in the step tree */
+        detail: true,
+        suiteTitle: true,
+        /* allure.issue('SCRUM-24') or { type: 'issue', description: 'SCRUM-24' } becomes a Jira link */
+        links: {
+          issue: { nameTemplate: '%s', urlTemplate: `${jiraURL}/browse/%s` },
+          tms: { nameTemplate: '%s', urlTemplate: `${jiraURL}/browse/%s` },
+        },
+        /* Shown in the report's Environment widget */
+        environmentInfo: {
+          BASE_URL: baseURL,
+          API_URL: apiURL,
+          BROWSER: process.env.BROWSER || 'all',
+          TAGS: process.env.TAGS || 'all',
+          NODE: process.version,
+          OS: `${os.platform()} ${os.release()}`,
+        },
+      },
+    ],
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('')`. */
-    baseURL: process.env.BASE_URL ?? 'https://playwright.dev',
+    baseURL,
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
+    /* Kept for failed tests only; the HTML and Allure reports attach them */
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
   },
 
   /* Browsers selected with the BROWSER env var (see allProjects above) */

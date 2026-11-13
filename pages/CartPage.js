@@ -1,3 +1,5 @@
+import * as allure from 'allure-js-commons';
+
 export class CartPage {
   constructor(page) {
     this.page = page;
@@ -8,6 +10,6 @@ export class CartPage {
   }
 
   async goto() {
-    await this.page.goto('/cart.html');
+    await allure.step('Open the cart page', () => this.page.goto('/cart.html'));
   }
 }
