@@ -137,13 +137,34 @@ MUTANT=post-price-off-by-one npm run test:api       # one mutant, with the norma
 | `mutation/proxy.mjs`   | Forwards requests to `API_URL` and applies the active mutant                       |
 | `mutation/run.mjs`     | Starts the proxy for each mutant, runs its tests and reports which tests killed it |
 
-Per-mutant JSON reports go to `mutation-results/` (git-ignored).
+Per-mutant JSON reports go to `mutation-results/` (git-ignored). The runner exits with 1 if any mutant is not killed, so it can run in CI. The files are `.mjs` so that Node loads them as ES modules while `package.json` stays `"type": "commonjs"`.
 
-The runner also writes one Allure result per mutant to `mutation-results/allure-results/`: a killed mutant is **passed** (green), a survivor is **failed** (red), and a mutant that never matched or that errored is **broken**. Each result has one step per test that ran, showing the assertion that caught it, a description containing the mutant's code, and that mutant's Playwright JSON report attached. The report has its own config (`mutation/allurerc.mjs`), output (`mutation-allure-report/`) and history (`mutation-allure-history.jsonl`). That keeps the deliberate test failures out of the main API report:
+#### Mutation Allure report
+
+The runner also writes one Allure result per mutant to `mutation-results/allure-results/`. The report has its own config (`mutation/allurerc.mjs`), output (`mutation-allure-report/`) and history (`mutation-allure-history.jsonl`), so the deliberate test failures never reach the main report. To run the mutants and view the report:
 
 ```bash
-npm run test:api:mutation && npm run mutation:allure:generate && npm run mutation:allure:open
-``` The runner exits with 1 if any mutant is not killed, so it can run in CI. The files are `.mjs` so that Node loads them as ES modules while `package.json` stays `"type": "commonjs"`.
+npm run test:api:mutation         # 1. run every mutant through the proxy
+npm run mutation:allure:generate  # 2. build the report from mutation-results/allure-results
+npm run mutation:allure:open      # 3. serve it and open it in the browser (Ctrl+C to stop)
+```
+
+As one line: `npm run test:api:mutation ; npm run mutation:allure:generate && npm run mutation:allure:open`. Use `;` after the first command, not `&&`. The runner exits with 1 when a mutant survives, and `&&` would then skip the report, on exactly the run you need it. To run only some mutants, name them in step 1: `npm run test:api:mutation -- post-price-off-by-one get-status-404`.
+
+- Use the `mutation:` scripts. `npm run allure:open` opens the main report (`allure-report/`), not this one.
+- If the browser doesn't open by itself (e.g. under WSL), open the `Allure is running on http://localhost:...` URL that step 3 prints.
+
+The colours show what the tests did under the mutant: red means they failed, which is what you want. A healthy run is all red, and Allure's "success rate" stays at 0%. Count the red results to get the mutation score.
+
+| Colour in the report | Meaning |
+|---|---|
+| Red (failed) | The mutant was **killed**: the tests failed, so they catch that bug. This is the good result |
+| Yellow (broken) | The mutant **survived**: the tests passed, so they would miss that bug. Tighten an assertion |
+| Purple (unknown) | The mutant never matched a request, a test title in `tests` is stale, or `mutate` errored |
+
+The CI `mutation` job doesn't follow the colours: it passes when every mutant is killed (all red) and fails on any yellow or purple result.
+
+Click a mutant to see one step per test that ran (with the assertion that caught it), the mutant's code in the description, and its Playwright JSON report under attachments. The trend chart fills in from the second run onwards.
 
 #### Adding a mutant
 
@@ -195,6 +216,7 @@ Every runner also writes [Allure](https://allurereport.org/) results. The CLI is
 | --- | --- | --- | --- |
 | Playwright Test + playwright-bdd | `allure-playwright` (in `playwright.config.js`) | `allure-results/` | `allure-report/` |
 | Cucumber | `allure-cucumberjs/reporter` (in `cucumber/cucumber.js`) | `cucumber/reports/allure-results/` | `cucumber/reports/allure-report/` |
+| Mutation tests | `mutation/run.mjs`, one result per mutant (see [Mutation Allure report](#mutation-allure-report)) | `mutation-results/allure-results/` | `mutation-allure-report/` |
 
 ```bash
 npm run test:allure                          # clean results, run Playwright tests, generate the report

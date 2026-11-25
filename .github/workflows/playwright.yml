@@ -191,7 +191,7 @@ jobs:
         name: mutation-results
         path: mutation-results/
         retention-days: 30
-    # One result per mutant: killed = passed, survived = failed, not applied / error = broken
+    # One result per mutant: killed = failed (red), survived = broken (yellow), not applied / error = unknown
     - name: Generate Allure report
       if: ${{ !cancelled() }}
       run: npm run mutation:allure:generate

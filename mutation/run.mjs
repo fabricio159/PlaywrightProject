@@ -7,7 +7,8 @@
 // Exits 1 if any mutant survived, never matched a request, or targets a test title that no longer exists.
 //
 // Also writes one Allure result per mutant to mutation-results/allure-results:
-// killed = passed (green), survived = failed (red), not applied / error = broken.
+// killed = failed (red: the tests failed, as they should), survived = broken (yellow),
+// not applied / error = unknown (purple).
 // Build the report with `npm run mutation:allure:generate` (config: mutation/allurerc.mjs).
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -64,7 +65,8 @@ function collectSpecs(suite, out = []) {
   return out;
 }
 
-const allureStatus = { killed: 'passed', SURVIVED: 'failed' }; // anything else is 'broken'
+// Mirrors the tests' own outcome under the mutant: red = they failed (caught it), yellow = they missed it.
+const allureStatus = { killed: 'failed', SURVIVED: 'broken' }; // NOT APPLIED / ERROR: 'unknown'
 
 /** One step per test that ran: did it catch the mutant? */
 function testSteps(result, start, stop) {
@@ -72,7 +74,7 @@ function testSteps(result, start, stop) {
     if (!t.ok) {
       return {
         name: `${t.title}: failed, caught the mutant`,
-        status: 'passed',
+        status: 'failed',
         statusDetails: { message: t.error ?? '' },
         stage: 'finished',
         start,
@@ -82,7 +84,7 @@ function testSteps(result, start, stop) {
     const survived = result.status === 'SURVIVED';
     return {
       name: `${t.title}: passed, ${survived ? 'missed the mutant' : 'another test caught it'}`,
-      status: survived ? 'failed' : 'skipped',
+      status: survived ? 'broken' : 'skipped',
       stage: 'finished',
       start,
       stop,
@@ -108,8 +110,8 @@ function writeAllureResult(result, start, stop) {
     testCaseId: crypto.createHash('md5').update(`mutation:${result.name}`).digest('hex'),
     name: result.name,
     fullName: `mutation/mutants.mjs#${result.name}`,
-    status: allureStatus[result.status] ?? 'broken',
-    statusDetails: { message: `${result.status}: ${result.detail}` },
+    status: allureStatus[result.status] ?? 'unknown',
+    statusDetails: { message: `${result.status.toUpperCase()}: ${result.detail}` },
     stage: 'finished',
     start,
     stop,
