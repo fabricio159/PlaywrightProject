@@ -75,11 +75,30 @@ const apiURL = process.env.API_URL ?? 'https://restful-booker.herokuapp.com';
 if (!/^https?:\/\//.test(apiURL)) {
   throw new Error(`Invalid API_URL value: ${apiURL}. It must start with http:// or https://`);
 }
+/**
+ * Mutation testing (mutation/): with MUTANT set, the API tests go through a local proxy that
+ * breaks matching responses, so the tests should fail. `npm run test:api:mutation` runs every mutant;
+ * `MUTANT=<name> npm run test:api` runs one with the normal reporters. See mutation/mutants.mjs.
+ */
+const mutant = process.env.MUTANT;
+const mutationPort = Number(process.env.MUTATION_PORT ?? 4010);
+const mutationURL = `http://127.0.0.1:${mutationPort}`;
+/* The mutation runner starts its own proxy per mutant; otherwise Playwright starts it */
+const webServer =
+  mutant && process.env.MUTATION_EXTERNAL_PROXY !== 'true'
+    ? {
+        command: 'node mutation/proxy.mjs',
+        url: `${mutationURL}/__mutation`,
+        reuseExistingServer: false,
+        env: { MUTANT: mutant, API_URL: apiURL, MUTATION_PORT: String(mutationPort) },
+      }
+    : undefined;
+
 const apiProject = {
   name: 'api',
   testDir: './tests/api',
   use: {
-    baseURL: apiURL,
+    baseURL: mutant ? mutationURL : apiURL,
     extraHTTPHeaders: { Accept: 'application/json' },
   },
   grep,
@@ -168,4 +187,7 @@ export default defineConfig({
 
   /* Browsers selected with the BROWSER env var (see allProjects above) */
   projects,
+
+  /* Mutation proxy, only when MUTANT is set (see above) */
+  webServer,
 });

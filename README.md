@@ -116,6 +116,77 @@ npm test                 # browser tests + API tests
 
 Paths in requests are relative to `API_URL`, e.g. `request.get('/booking/1')`. A spec that targets a different API overrides it with `test.use({ baseURL })` (see `tests/api/posts.spec.js`). Results go to the same HTML report.
 
+### Mutation tests
+
+Mutation tests check that the API tests catch bad responses. A local proxy (`mutation/proxy.mjs`) sits between the tests and `API_URL` and changes one kind of response, such as a wrong status, a missing field or a changed value. That change is called a mutant. The tests should then fail:
+
+- **killed**: at least one test failed, so the tests catch that bug
+- **SURVIVED**: every test passed, so the tests would miss that bug in the real API and an assertion needs tightening
+
+The specs don't change. With `MUTANT` set, the `api` project's `baseURL` points at the proxy (`http://127.0.0.1:4010`, or set `MUTATION_PORT`). `page.route()` can't be used here, because it doesn't intercept requests from the `request` fixture. Specs that set their own `baseURL` (`tests/api/posts.spec.js`) don't go through the proxy.
+
+```bash
+npm run test:api:mutation                           # every mutant, one at a time, with a killed/survived summary
+npm run test:api:mutation -- post-price-off-by-one  # only the named mutant(s)
+MUTANT=post-price-off-by-one npm run test:api       # one mutant, with the normal HTML/Allure reports (Linux/macOS/WSL)
+```
+
+| File                   | What it does                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `mutation/mutants.mjs` | The list of mutants. This is the only file you edit to add one                     |
+| `mutation/proxy.mjs`   | Forwards requests to `API_URL` and applies the active mutant                       |
+| `mutation/run.mjs`     | Starts the proxy for each mutant, runs its tests and reports which tests killed it |
+
+Per-mutant JSON reports go to `mutation-results/` (git-ignored).
+
+The runner also writes one Allure result per mutant to `mutation-results/allure-results/`: a killed mutant is **passed** (green), a survivor is **failed** (red), and a mutant that never matched or that errored is **broken**. Each result has one step per test that ran, showing the assertion that caught it, a description containing the mutant's code, and that mutant's Playwright JSON report attached. The report has its own config (`mutation/allurerc.mjs`), output (`mutation-allure-report/`) and history (`mutation-allure-history.jsonl`). That keeps the deliberate test failures out of the main API report:
+
+```bash
+npm run test:api:mutation && npm run mutation:allure:generate && npm run mutation:allure:open
+``` The runner exits with 1 if any mutant is not killed, so it can run in CI. The files are `.mjs` so that Node loads them as ES modules while `package.json` stays `"type": "commonjs"`.
+
+#### Adding a mutant
+
+1. **Pick the test(s) and the response to break.** Note each test's exact title (the first argument to `test()`) and the method and path of the response.
+
+2. **Add an entry to `mutants` in `mutation/mutants.mjs`.** The key is the mutant's name and appears in the report:
+
+   ```js
+   'post-lastname-empty': {
+     tests: [POST_TEST],     // exact test titles; the runner runs only these
+     match: createBooking,   // which requests this mutant applies to
+     mutate: (res) => {      // change res.status and/or res.body in place
+       res.body.booking.lastname = '';
+     },
+   },
+   ```
+
+   | Field    | Required | Description                                                                                          |
+   | -------- | -------- | ---------------------------------------------------------------------------------------------------- |
+   | `tests`  | no       | Titles of the tests this mutant is for. Leave it out to run every API test                           |
+   | `match`  | yes      | `({ method, path, body }) => boolean`. `path` has no query string; `body` is the parsed request JSON |
+   | `mutate` | yes      | `(res) => void`. `res.status` is the HTTP status, `res.body` the parsed response JSON                |
+
+   For a new endpoint, add a matcher next to `createBooking` and `getBooking`, for example `({ method, path }) => method === 'PUT' && /^\/booking\/\d+$/.test(path)`. For a new test, add a title constant next to `POST_TEST` and `GET_TEST`.
+
+3. **Run it:** `npm run test:api:mutation -- post-lastname-empty`
+
+4. **Read the result:**
+
+   | Result                      | Meaning                                                        | What to do                                                           |
+   | --------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------- |
+   | `killed by: <tests>`        | The tests caught it                                            | Nothing; keep the mutant                                             |
+   | `SURVIVED`                  | The tests passed with the broken response                      | Tighten the assertion it got past (e.g. `toMatchObject` → `toEqual`) |
+   | `NOT APPLIED`               | `match` never matched a request                                | Fix the method or path in `match`                                    |
+   | `ERROR no test titled: ...` | A title in `tests` doesn't match any test                      | Update the title, e.g. after renaming a test                         |
+   | `ERROR ...` (other)         | `mutate` threw, e.g. the response wasn't the shape it expected | Fix `mutate`, or narrow `match`                                      |
+
+5. **New spec file?** The runner only runs `tests/api/booking.spec.js` by default. To include other specs, set `MUTATION_SPECS`, for example `MUTATION_SPECS=tests/api npm run test:api:mutation`.
+
+**When several tests call the same path:** a mutant changes every matching response, whichever test sent the request. For example, the GET test creates its booking with `POST /booking` first. Use `tests` to aim a mutant at the test whose assertions it should break. Otherwise another test failing in its setup counts as a kill and hides whether the intended checks work. A mutant can list several tests; the report shows which killed it and which still passed (see `post-additionalneeds-dropped`).
+
+Good kinds of mutant: a wrong status (200 → 500/404), a missing field, a wrong type (`111` → `"111"`), a wrong value (flipped boolean, shifted date), an extra field, or a wrong shape (`{}`, an array).
+
 ## Allure report
 
 Every runner also writes [Allure](https://allurereport.org/) results. The CLI is Allure 3 (the `allure` npm package), so Java isn't needed.
@@ -169,9 +240,9 @@ For Cucumber, the Gherkin tags `@issue:SCRUM-24` and `@severity:critical` become
 
 ## CI
 
-`.github/workflows/playwright.yml` runs approach 1 (`npx playwright test` with `SKIP_API=true`) and, in a separate `api` job with no browser install, the API tests (`npm run test:api`), on pushes and pull requests to `main`/`master`. The `playwright` job also runs the BDD suite, and a `cucumber` job runs the Cucumber suite.
+`.github/workflows/playwright.yml` runs approach 1 (`npx playwright test` with `SKIP_API=true`) and, in a separate `api` job with no browser install, the API tests (`npm run test:api`), on pushes and pull requests to `main`/`master`. The `playwright` job also runs the BDD suite, a `cucumber` job runs the Cucumber suite, and a `mutation` job runs the [mutation tests](#mutation-tests) (`npm run test:api:mutation`). That job fails if any mutant survives, and uploads the per-mutant reports as `mutation-results`.
 
-Each job also generates an Allure report and uploads it as an artifact: `allure-report` (Playwright + BDD combined), `api-allure-report`, and the Allure report inside `cucumber-report`. Allure history is kept between CI runs with `actions/cache`. Each job restores the newest `allure-history.jsonl` before its tests run and saves it again after generating the report, so downloaded reports show trends, flaky tests and per-test history. Notes:
-- Each job (`playwright`, `api`, `cucumber`) has its own history, keyed per branch. A new branch starts from another branch's history (PRs can read master's).
+Each job also generates an Allure report and uploads it as an artifact: `allure-report` (Playwright + BDD combined), `api-allure-report`, `mutation-allure-report`, and the Allure report inside `cucumber-report`. Allure history is kept between CI runs with `actions/cache`. Each job restores the newest `allure-history.jsonl` before its tests run and saves it again after generating the report, so downloaded reports show trends, flaky tests and per-test history. Notes:
+- Each job (`playwright`, `api`, `mutation`, `cucumber`) has its own history (the `mutation` job's is `mutation-allure-history.jsonl`), keyed per branch. A new branch starts from another branch's history (PRs can read master's).
 - Caches that aren't used for 7 days are deleted by GitHub, and the history is lost with them.
 - Manual runs with a different browser or tags go into the same history.
