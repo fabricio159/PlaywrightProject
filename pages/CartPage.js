@@ -1,7 +1,9 @@
 import * as allure from 'allure-js-commons';
+import { BasePage } from './BasePage';
 
-export class CartPage {
+export class CartPage extends BasePage{
   constructor(page) {
+    super(page);
     this.page = page;
     this.title = page.locator('[data-test="title"]');
     this.items = page.locator('[data-test="inventory-item"]');

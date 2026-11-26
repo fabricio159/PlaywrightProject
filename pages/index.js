@@ -1,6 +1,7 @@
 import { LoginPage } from './LoginPage.js';
 import { ProductsPage } from './ProductsPage.js';
 import { CartPage } from './CartPage.js';
+import { LazyLoadPage }  from './LazyLoadPage.js';
 export { allureFixtures } from './allure.js';
 
 const LOGGED_OUT = { cookies: [], origins: [] };
@@ -19,6 +20,9 @@ export const pageFixtures = {
   cartPage: async ({ page }, use) => {
     await use(new CartPage(page));
   },
+  lazyLoadPage: async ({ page }, use) => {
+    await use(new LazyLoadPage(page));
+  }
 };
 
 /** Tests start logged in through storageState; tag them @logged-out to start with an empty browser. */
