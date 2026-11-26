@@ -12,11 +12,15 @@ export default [
       'playwright/.auth/**',
       '.features-gen/**',
       'cucumber/reports/**',
+      'allure-results/**',
+      'allure-report/**',
+      'mutation-results/**',
+      'mutation-allure-report/**',
     ],
   },
   js.configs.recommended,
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', 'mutation/**/*.mjs'],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',

@@ -1,3 +1,5 @@
+import * as allure from 'allure-js-commons';
+
 export class LoginPage {
   constructor(page) {
     this.page = page;
@@ -8,12 +10,14 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto('/');
+    await allure.step('Open the login page', () => this.page.goto('/'));
   }
 
   async login(username, password) {
-    await this.username.fill(username);
-    await this.password.fill(password);
-    await this.loginButton.click();
+    await allure.step(`Log in as ${username}`, async () => {
+      await this.username.fill(username);
+      await this.password.fill(password);
+      await this.loginButton.click();
+    });
   }
 }

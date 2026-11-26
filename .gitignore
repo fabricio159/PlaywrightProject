@@ -17,3 +17,12 @@ node_modules/
 
 # claude
 .claude
+# Allure
+/allure-results/
+/allure-report/
+/allure-history.jsonl
+
+# Mutation testing reports (npm run test:api:mutation)
+/mutation-results/
+/mutation-allure-report/
+/mutation-allure-history.jsonl

@@ -1,10 +1,17 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // Request mocking on Saucedemo: the login page sends an analytics request we can intercept.
 // Routes must be registered before page.goto, or the requests have already gone out.
 
 // Start logged out: the analytics request only fires on a fresh, logged-out load of '/'.
 test.use({ storageState: { cookies: [], origins: [] } });
+
+// This file uses @playwright/test directly (no shared fixtures), so it sets its own Allure labels.
+test.beforeEach(async () => {
+  await allure.epic('SauceDemo');
+  await allure.feature('Network mocking');
+});
 
 test('analytics gets a fake response (route.fulfill)', { tag: '@MockedTest' }, async ({ page }) => {
   await page.route('**/events.backtrace.io/**', (route) =>

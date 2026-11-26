@@ -1,6 +1,13 @@
 import { test, expect } from '@playwright/test';
+import * as allure from 'allure-js-commons';
 
 // Restful-Booker (API_URL): https://restful-booker.herokuapp.com/apidoc/index.html
+
+// This file uses @playwright/test directly (no shared fixtures), so it sets its own Allure labels.
+test.beforeEach(async () => {
+  await allure.epic('Restful-Booker API');
+  await allure.feature('Booking');
+});
 
 const newBooking = {
   firstname: 'Jim',

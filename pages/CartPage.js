@@ -1,5 +1,9 @@
-export class CartPage {
+import * as allure from 'allure-js-commons';
+import { BasePage } from './BasePage';
+
+export class CartPage extends BasePage{
   constructor(page) {
+    super(page);
     this.page = page;
     this.title = page.locator('[data-test="title"]');
     this.items = page.locator('[data-test="inventory-item"]');
@@ -8,6 +12,6 @@ export class CartPage {
   }
 
   async goto() {
-    await this.page.goto('/cart.html');
+    await allure.step('Open the cart page', () => this.page.goto('/cart.html'));
   }
 }

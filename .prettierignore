@@ -6,3 +6,5 @@ playwright/.auth/
 .features-gen/
 cucumber/reports/
 package-lock.json
+mutation-results/
+mutation-allure-report/
